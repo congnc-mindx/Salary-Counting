@@ -17,7 +17,6 @@ import {
   Save,
   Settings,
   Trash2,
-  UserCheck,
   Users,
   Wallet,
   X,
@@ -26,7 +25,6 @@ import clsx from 'clsx';
 
 type Tab =
   | 'overview'
-  | 'calendar'
   | 'classes'
   | 'makeup'
   | 'judge'
@@ -626,30 +624,28 @@ export default function App() {
               <GraduationCap size={25} />
             </div>
             <div>
-              <h1 className="text-xl font-black">Lịch Dạy</h1>
-              <p className="text-sm font-semibold text-slate-500">Trung tâm lập trình</p>
+              <h1 className="text-xl font-black">Thu nhập</h1>
+              <p className="text-sm font-semibold text-slate-500">mindX</p>
             </div>
           </div>
 
           <nav className="space-y-2">
             <SideTab active={activeTab === 'overview'} icon={<Home size={20} />} label="Tổng quan" onClick={() => setActiveTab('overview')} />
-            <SideTab active={activeTab === 'calendar'} icon={<CalendarDays size={20} />} label="Lịch tháng" onClick={() => setActiveTab('calendar')} />
             <SideTab active={activeTab === 'classes'} icon={<Wallet size={20} />} label="Lớp học của tôi" onClick={() => setActiveTab('classes')} />
             <SideTab active={activeTab === 'makeup'} icon={<Clock size={20} />} label="Dạy bù" onClick={() => setActiveTab('makeup')} />
             <SideTab active={activeTab === 'judge'} icon={<Users size={20} />} label="Ban giám khảo" onClick={() => setActiveTab('judge')} />
-            <SideTab active={activeTab === 'trial'} icon={<Landmark size={20} />} label="Dạy trải nghiệm" badge="NEW" onClick={() => setActiveTab('trial')} />
-            <SideTab active={activeTab === 'holidays'} icon={<CalendarDays size={20} />} label="Ngày nghỉ" onClick={() => setActiveTab('holidays')} />
+            <SideTab active={activeTab === 'trial'} icon={<Landmark size={20} />} label="Dạy trải nghiệm" onClick={() => setActiveTab('trial')} />            <SideTab active={activeTab === 'holidays'} icon={<CalendarDays size={20} />} label="Ngày nghỉ" onClick={() => setActiveTab('holidays')} />
             <SideTab active={activeTab === 'salary'} icon={<Coins size={20} />} label="Thống kê" onClick={() => setActiveTab('salary')} />
             <SideTab active={activeTab === 'settings'} icon={<Settings size={20} />} label="Cài đặt" onClick={() => setActiveTab('settings')} />
           </nav>
 
-          <div className="mt-auto pt-10">
+          {/* <div className="mt-auto pt-10">
             <div className="rounded-3xl bg-blue-50 p-4">
               <p className="text-sm font-black text-blue-900">Mức lương GV</p>
               <p className="mt-2 text-2xl font-black text-blue-700">{money(currentTeacherRate)}</p>
-              <p className="text-xs font-bold text-blue-700">/ ca 2 tiếng</p>
+              <p className="text-xs font-bold text-blue-700">/ca</p>
             </div>
-          </div>
+          </div> */}
         </aside>
 
         <main className="min-w-0 flex-1 p-4 lg:p-8">
@@ -689,7 +685,7 @@ export default function App() {
 
           <div className="mt-5 grid gap-5 2xl:grid-cols-[1fr_410px]">
             <section className="min-w-0">
-              {(activeTab === 'overview' || activeTab === 'calendar') && (
+              {(activeTab === 'overview') && (
                 <CalendarBoard
                   selectedMonth={selectedMonth}
                   sessions={monthSessions}
@@ -1171,7 +1167,7 @@ function QuickBookPanel({
         <QuickBookButton icon={<Wallet />} label="Lớp học cố định" onClick={openAddCourse} />
         <QuickBookButton icon={<Clock />} label="Dạy bù" onClick={openMakeup} />
         <QuickBookButton icon={<Users />} label="Ban giám khảo" onClick={openJudge} />
-        <QuickBookButton icon={<Landmark />} label="Dạy trải nghiệm" badge="NEW" onClick={openTrial} />
+        <QuickBookButton icon={<Landmark />} label="Dạy trải nghiệm" onClick={openTrial} />
         <QuickBookButton icon={<Settings />} label="Ngày nghỉ" onClick={openHoliday} />
       </div>
     </div>
@@ -1567,53 +1563,43 @@ function WorkRow({
   onStatus: (status: WorkStatus) => void;
   onDelete?: () => void;
 }) {
+  const isCancelled = status === 'cancelled';
+
   return (
     <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div>
           <p className="font-black">{title}</p>
           <p className="mt-1 text-sm font-semibold text-slate-500">{subtitle}</p>
-          <p className="mt-2 font-black text-blue-700">{amount}</p>
+          <p className="mt-2 font-black text-blue-700">{isCancelled ? 'Không tính' : amount}</p>
         </div>
 
         <div className="flex flex-wrap gap-2">
-          <StatusButton active={status === 'planned'} label="Dự kiến" onClick={() => onStatus('planned')} />
-          <StatusButton active={status === 'confirmed'} label="Xác nhận" onClick={() => onStatus('confirmed')} />
-          <StatusButton active={status === 'cancelled'} label="Hủy" danger onClick={() => onStatus('cancelled')} />
-          {onDelete && (
-            <button onClick={onDelete} className="rounded-full bg-red-50 px-3 py-2 text-xs font-black text-red-700">
-              <Trash2 size={14} />
+          <span
+            className={clsx(
+              'rounded-full px-4 py-2 text-sm font-black',
+              status === 'confirmed' && 'bg-blue-600 text-white',
+              status === 'planned' && 'bg-slate-100 text-slate-500',
+              status === 'cancelled' && 'bg-red-100 text-red-700'
+            )}
+          >
+            {status === 'confirmed' ? 'Xác nhận' : status === 'planned' ? 'Dự kiến' : 'Đã hủy'}
+          </span>
+
+          {!isCancelled && (
+            <button
+              onClick={() => {
+                onStatus('cancelled');
+                onDelete?.();
+              }}
+              className="rounded-full bg-slate-100 px-4 py-2 text-sm font-black text-slate-500 hover:bg-red-50 hover:text-red-700"
+            >
+              Hủy
             </button>
           )}
         </div>
       </div>
     </div>
-  );
-}
-
-function StatusButton({
-  active,
-  label,
-  danger,
-  onClick,
-}: {
-  active: boolean;
-  label: string;
-  danger?: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={clsx(
-        'rounded-full px-3 py-2 text-xs font-black',
-        active && !danger && 'bg-blue-600 text-white',
-        active && danger && 'bg-red-600 text-white',
-        !active && 'bg-slate-100 text-slate-500'
-      )}
-    >
-      {label}
-    </button>
   );
 }
 
@@ -1721,7 +1707,6 @@ function MobileTabs({
 }) {
   const items: { key: Tab; label: string; icon: React.ReactNode }[] = [
     { key: 'overview', label: 'Tổng quan', icon: <Home size={20} /> },
-    { key: 'calendar', label: 'Lịch', icon: <CalendarDays size={20} /> },
     { key: 'classes', label: 'Lớp', icon: <GraduationCap size={20} /> },
     { key: 'salary', label: 'Lương', icon: <Coins size={20} /> },
     { key: 'settings', label: 'Cài đặt', icon: <Settings size={20} /> },
@@ -1778,18 +1763,24 @@ function Field({
   onChange,
   type = 'text',
   placeholder,
+  min,
+  step,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   type?: string;
   placeholder?: string;
+  min?: number;
+  step?: number;
 }) {
   return (
-    <label className="block">
+<label className="block">
       <span className="mb-2 block font-black text-slate-700">{label}</span>
       <input
         type={type}
+        min={min}
+        step={step}
         value={value}
         placeholder={placeholder}
         onChange={(event) => onChange(event.target.value)}
@@ -1843,7 +1834,6 @@ function CourseModal({
   const [startDate, setStartDate] = useState(course?.startDate || todayISO());
   const [weekday, setWeekday] = useState(String(course?.weekday ?? getNativeWeekday(todayISO())));
   const [startTime, setStartTime] = useState(course?.startTime || '19:30');
-  const [totalSessions, setTotalSessions] = useState(String(course?.totalSessions || 14));
 
   function submit() {
     onSave(
@@ -1852,7 +1842,7 @@ function CourseModal({
         startDate,
         weekday: Number(weekday),
         startTime,
-        totalSessions: Number(totalSessions) || 14,
+        totalSessions: 14,
       },
       course?.id
     );
@@ -1880,11 +1870,6 @@ function CourseModal({
         />
 
         <Field label="Giờ bắt đầu" type="time" value={startTime} onChange={setStartTime} />
-        <Field label="Số buổi" type="number" value={totalSessions} onChange={setTotalSessions} />
-
-        <div className="rounded-3xl bg-blue-50 p-4 text-sm font-bold text-blue-800">
-          Ca dạy mặc định 2 tiếng. App tự tính giờ kết thúc là {addHoursToTime(startTime, 2)}. Lương hiện tại: {money(currentRate)} / ca.
-        </div>
 
         <button onClick={submit} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 px-4 py-4 font-black text-white">
           <Save size={18} />
@@ -1961,15 +1946,14 @@ function ExtraWorkModal({
   const [classCode, setClassCode] = useState(type === 'trial' ? '' : type === 'makeup' ? 'SA55' : 'GA71');
   const [datetime, setDatetime] = useState(datetimeNowLocal());
   const [hours, setHours] = useState('1');
-  const [students, setStudents] = useState('Nguyễn Minh Anh, Trần Gia Huy');
   const [studentCount, setStudentCount] = useState('1');
   const [trialMode, setTrialMode] = useState<'ONL' | 'OFF'>('ONL');
-  const [campus, setCampus] = useState('Cơ sở Nguyễn Trãi');
-  const [status, setStatus] = useState<WorkStatus>(getDefaultStatusByDate(todayISO()));
+  const [campus, setCampus] = useState('Oceanpark');
+  const status = getDefaultStatusByDate(dateFromDateTime(datetime));
   const [note, setNote] = useState('');
 
-  const parsedHours = Number(hours.replace(',', '.')) || 0;
-  const parsedStudentCount = Number(studentCount) || 0;
+  const parsedHours = Math.max(1, Math.floor(Number(hours) || 1));
+  const parsedStudentCount = Math.max(0, Number(studentCount) || 0);
 
   const preview: ExtraWork = {
     id: 'preview',
@@ -1977,7 +1961,6 @@ function ExtraWorkModal({
     classCode,
     datetime,
     hours: type === 'judge' ? 2 : parsedHours,
-    students,
     studentCount: parsedStudentCount,
     trialMode,
     campus,
@@ -1993,12 +1976,11 @@ function ExtraWorkModal({
       classCode: type === 'trial' ? undefined : classCode.trim().toUpperCase(),
       datetime,
       hours: type === 'judge' ? 2 : parsedHours,
-      students: type === 'makeup' ? students : undefined,
       studentCount: type === 'trial' ? parsedStudentCount : undefined,
       trialMode: type === 'trial' ? trialMode : undefined,
       campus: type === 'trial' ? campus : undefined,
       status,
-      note,
+      note, 
     });
   }
 
@@ -2018,23 +2000,27 @@ function ExtraWorkModal({
           label="Thời gian bắt đầu"
           type="datetime-local"
           value={datetime}
-          onChange={(value) => {
-            setDatetime(value);
-            setStatus(getDefaultStatusByDate(dateFromDateTime(value)));
-          }}
+          onChange={setDatetime}
         />
 
         {type === 'makeup' && (
           <>
-            <Field label="Số giờ dạy bù" type="number" value={hours} onChange={setHours} />
-            <Field label="Tên học sinh" value={students} onChange={setStudents} placeholder="Viết chung nhiều tên vào đây" />
+            <Field
+              label="Số giờ dạy bù"
+              type="number"
+              min={1}
+              step={1}
+              value={hours}
+              onChange={setHours}
+            />
+            <Field label="Số học sinh" type="number" min={0} step={1} value={studentCount} onChange={setStudentCount} />
           </>
         )}
 
         {type === 'trial' && (
           <>
             <SelectField
-              label="Hình thức trial"
+              label="Hình thức"
               value={trialMode}
               onChange={(value) => setTrialMode(value as 'ONL' | 'OFF')}
               options={[
@@ -2042,32 +2028,15 @@ function ExtraWorkModal({
                 { label: 'Offline', value: 'OFF' },
               ]}
             />
-            <Field label="Cơ sở đi dạy trial" value={campus} onChange={setCampus} />
+            <Field label="Cơ sở" value={campus} onChange={setCampus} />
             <Field label="Số học sinh" type="number" value={studentCount} onChange={setStudentCount} />
           </>
         )}
 
-        {type === 'judge' && (
-          <div className="rounded-3xl bg-purple-50 p-4 text-sm font-bold text-purple-800">
-            Giám khảo mặc định 2 tiếng, lương cố định {money(settings.judgeRatePerSession)} / lịch.
-          </div>
-        )}
-
-        <SelectField
-          label="Trạng thái"
-          value={status}
-          onChange={(value) => setStatus(value as WorkStatus)}
-          options={[
-            { label: 'Dự kiến', value: 'planned' },
-            { label: 'Đã xác nhận', value: 'confirmed' },
-            { label: 'Hủy', value: 'cancelled' },
-          ]}
-        />
-
         <Field label="Ghi chú" value={note} onChange={setNote} />
 
         <div className="rounded-3xl bg-blue-50 p-4 text-sm font-bold text-blue-800">
-          Lương tạm tính: {money(estimate)}
+          Lương: {money(estimate)}
         </div>
 
         <button onClick={submit} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 px-4 py-4 font-black text-white">
@@ -2123,12 +2092,12 @@ function extraTitle(item: ExtraWork) {
 
 function extraSubtitle(item: ExtraWork) {
   if (item.type === 'trial') {
-    return `${formatDateTimeVN(item.datetime)} · ${item.campus || 'Chưa có cơ sở'}`;
+    return `${formatDateTimeVN(item.datetime)} · ${item.campus || 'Chưa có cơ sở'}${item.note ? ` · ${item.note}` : ''}`;
   }
 
   if (item.type === 'makeup') {
-    return `${formatDateTimeVN(item.datetime)} · ${item.hours || 0} giờ · HS: ${item.students || 'Chưa ghi'}`;
+    return `${formatDateTimeVN(item.datetime)} · ${item.hours || 0} giờ${item.note ? ` · ${item.note}` : ''}`;
   }
 
-  return `${formatDateTimeVN(item.datetime)} · mặc định 2 tiếng`;
+  return formatDateTimeVN(item.datetime);
 }
